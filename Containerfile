@@ -4,6 +4,7 @@ FROM frappe/build:${FRAPPE_BRANCH} AS builder
 
 ARG FRAPPE_BRANCH=version-16
 ARG FRAPPE_PATH=https://github.com/frappe/frappe
+ARG GITHUB_TOKEN
 
 USER root
 
@@ -11,7 +12,11 @@ COPY apps.json /opt/frappe/apps.json
 
 USER frappe
 
-RUN bench init \
+# Configure git to use the token for private GitHub repos
+RUN if [ -n "${GITHUB_TOKEN}" ]; then \
+    git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+  fi && \
+  bench init \
     --apps_path=/opt/frappe/apps.json \
     --frappe-branch=${FRAPPE_BRANCH} \
     --frappe-path=${FRAPPE_PATH} \
@@ -22,7 +27,8 @@ RUN bench init \
     /home/frappe/frappe-bench && \
   cd /home/frappe/frappe-bench && \
   echo "{}" > sites/common_site_config.json && \
-  find apps -mindepth 1 -path "*/.git" | xargs rm -fr
+  find apps -mindepth 1 -path "*/.git" | xargs rm -fr && \
+  git config --global --remove-section url."https://${GITHUB_TOKEN}@github.com/" 2>/dev/null || true
 
 FROM frappe/base:${FRAPPE_BRANCH} AS backend
 

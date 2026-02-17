@@ -13,6 +13,7 @@ x-customizable-image: &customizable_image
     args:
       - FRAPPE_BRANCH=version-16
       - FRAPPE_PATH=https://github.com/frappe/frappe
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
   restart: unless-stopped
 
 x-depends-on-configurator: &depends_on_configurator
